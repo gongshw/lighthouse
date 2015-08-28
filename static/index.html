@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+
+<head>
+    <script>
+    function go() {
+        var url = document.getElementById("url").value;
+        location.href = "http://localhost:8080/proxy?" + url;
+    }
+    </script>
+</head>
+
+<body>
+    <input type="text" id="url"></input>
+    <button onclick="go()">转到</button>
+</body>
+
+</html>
