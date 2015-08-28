@@ -1,4 +1,4 @@
-package main
+package web
 
 import (
 	"encoding/json"
@@ -55,7 +55,7 @@ func headerIs(headerMap map[string][]string, contentType string, typrValue strin
 	return exist && len(header) == 1 && strings.HasPrefix(header[0], typrValue)
 }
 
-func main() {
+func Start() {
 	configFile, err := os.Open("conf.json")
 	if err != nil {
 		log.Fatal(err)
