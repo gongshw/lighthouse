@@ -1,12 +1,22 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gongshw/lighthouse/hook"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 )
+
+type Configuration struct {
+	StaicFileDir  string
+	ServerBaseUrl string
+	ServerPort    int
+}
 
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.RawQuery
@@ -46,7 +56,19 @@ func headerIs(headerMap map[string][]string, contentType string, typrValue strin
 }
 
 func main() {
+	configFile, err := os.Open("conf.json")
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	decoder := json.NewDecoder(configFile)
+	configuration := Configuration{}
+	err = decoder.Decode(&configuration)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 	http.HandleFunc("/proxy", proxyHandler)
-	http.Handle("/", http.FileServer(http.Dir("static")))
-	http.ListenAndServe(":8080", nil)
+	http.Handle("/", http.FileServer(http.Dir(configuration.StaicFileDir)))
+	http.ListenAndServe(":"+strconv.Itoa(configuration.ServerPort), nil)
 }

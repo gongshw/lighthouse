@@ -48,9 +48,12 @@ func flushToken(htmlBuf *[]byte, tokenBuf []byte, base string) {
 	if len(tokenBuf) > 0 && tokenBuf[0] == '<' {
 		if token := string(tokenBuf); needProxy(token) != "" {
 			fullUrlRegex := regexp.MustCompile("(https?:\\/\\/([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?)")
+			nonSchemaUrlRegex := regexp.MustCompile("(\\/\\/([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?)")
 			absoluteUrlRegex := regexp.MustCompile("(\"\\s*)(\\/([\\/\\w \\.-]*)*\\/?)")
 			if fullUrlRegex.MatchString(token) {
 				token = fullUrlRegex.ReplaceAllString(token, "/proxy?$1")
+			} else if nonSchemaUrlRegex.MatchString(token) {
+				token = fullUrlRegex.ReplaceAllString(token, "/proxy?http:$1")
 			} else if absoluteUrlRegex.MatchString(token) {
 				token = absoluteUrlRegex.ReplaceAllString(token, "$1/proxy?"+base+"$2")
 			}
@@ -80,6 +83,8 @@ func needProxy(token string) string {
 		"link":   "href",
 		"base":   "href",
 		"img":    "src",
+		"meta":   "content",
+		"form":   "action",
 	}
 	return tagToProxy[getTagName(token)]
 }
