@@ -1,1 +1,18 @@
 # lighthouse 
+
+install golang
+
+run `go get github.com/gongshw/lighthouse`
+
+make a conf.json file at the work dir:
+
+```json
+{
+    "StaicFileDir": "static",
+    "ServerBaseUrl": "http(s)://your_server:8080/",
+    "ServerPort": 8080
+}
+
+```
+
+run `$GOPATH/bin/lighthouse`
