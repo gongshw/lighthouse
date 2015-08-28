@@ -1,13 +1,12 @@
 package web
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/gongshw/lighthouse/conf"
 	"github.com/gongshw/lighthouse/hook"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -20,14 +19,16 @@ type Configuration struct {
 
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.RawQuery
-	resp, conErr := http.Get(url)
+	resp, conErr := proxyRequest(r)
 	if conErr != nil {
+		log.Fatal(conErr)
 		fmt.Fprintf(w, "连接异常: %s", url)
 		return
 	}
 	body, readErr := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if readErr != nil {
+		log.Fatal(readErr)
 		fmt.Fprintf(w, "网页读取异常: %s", url)
 		return
 	}
@@ -50,25 +51,23 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func proxyRequest(r *http.Request) (*http.Response, error) {
+	// TODO proxy METHOD and HEADER
+	url := r.URL.RawQuery
+	log.Println("Proxy " + url)
+	resp, conErr := http.Get(url)
+	return resp, conErr
+}
+
 func headerIs(headerMap map[string][]string, contentType string, typrValue string) bool {
 	header, exist := headerMap[contentType]
 	return exist && len(header) == 1 && strings.HasPrefix(header[0], typrValue)
 }
 
 func Start() {
-	configFile, err := os.Open("conf.json")
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	decoder := json.NewDecoder(configFile)
-	configuration := Configuration{}
-	err = decoder.Decode(&configuration)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
 	http.HandleFunc("/proxy", proxyHandler)
-	http.Handle("/", http.FileServer(http.Dir(configuration.StaicFileDir)))
-	http.ListenAndServe(":"+strconv.Itoa(configuration.ServerPort), nil)
+	http.Handle("/", http.FileServer(http.Dir(conf.CONFIG.StaicFileDir)))
+	serverPortStr := strconv.Itoa(conf.CONFIG.ServerPort)
+	log.Println("Server listened at 0.0.0.0:" + serverPortStr)
+	log.Fatal(http.ListenAndServe("0.0.0.0:"+serverPortStr, nil))
 }
