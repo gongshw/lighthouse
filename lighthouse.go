@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	err := conf.InitConfig("./conf.json")
+	err := conf.InitConfig("")
 	if err == nil {
 		web.Start()
 	} else {

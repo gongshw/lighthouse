@@ -1,7 +1,6 @@
 package hook
 
 import (
-	_ "fmt"
 	"regexp"
 )
 

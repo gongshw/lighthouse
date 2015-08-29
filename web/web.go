@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gongshw/lighthouse/conf"
 	"github.com/gongshw/lighthouse/hook"
@@ -17,19 +18,22 @@ type Configuration struct {
 	ServerPort    int
 }
 
+const _5MB = 5 * 1024 * 1024
+
+var ERROR_RESPONSE_TOO_LARGE = errors.New("responese too large")
+
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.RawQuery
 	resp, conErr := proxyRequest(r)
 	if conErr != nil {
-		log.Fatal(conErr)
-		fmt.Fprintf(w, "连接异常: %s", url)
+		log.Println(conErr)
+		fmt.Fprintf(w, "connection error: %s", url)
 		return
 	}
-	body, readErr := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
-	if readErr != nil {
-		log.Fatal(readErr)
-		fmt.Fprintf(w, "网页读取异常: %s", url)
+	if size := resp.ContentLength; size > _5MB {
+		log.Fatal(ERROR_RESPONSE_TOO_LARGE)
+		fmt.Fprintf(w, "responese too large: %s", url)
 		return
 	}
 	w.Header().Add("Proxy-By", "gongshw/lighthouse")
@@ -42,6 +46,12 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(resp.StatusCode)
+	body, readErr := ioutil.ReadAll(resp.Body)
+	if readErr != nil {
+		log.Println(readErr)
+		fmt.Fprintf(w, "ead content error: %s", url)
+		return
+	}
 	if headerIs(resp.Header, "Content-Type", "text/html") {
 		w.Write([]byte(hook.ParseHtml(string(body[:]), url)))
 	} else if headerIs(resp.Header, "Content-Type", "text/css") {
@@ -54,20 +64,20 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 func proxyRequest(r *http.Request) (*http.Response, error) {
 	// TODO proxy METHOD and HEADER
 	url := r.URL.RawQuery
-	log.Println("Proxy " + url)
+	log.Println("proxy " + url)
 	resp, conErr := http.Get(url)
 	return resp, conErr
 }
 
-func headerIs(headerMap map[string][]string, contentType string, typrValue string) bool {
-	header, exist := headerMap[contentType]
-	return exist && len(header) == 1 && strings.HasPrefix(header[0], typrValue)
+func headerIs(headerMap map[string][]string, headerKey string, headerValue string) bool {
+	header, exist := headerMap[headerKey]
+	return exist && len(header) == 1 && strings.HasPrefix(header[0], headerValue)
 }
 
 func Start() {
 	http.HandleFunc("/proxy", proxyHandler)
 	http.Handle("/", http.FileServer(http.Dir(conf.CONFIG.StaicFileDir)))
 	serverPortStr := strconv.Itoa(conf.CONFIG.ServerPort)
-	log.Println("Server listened at 0.0.0.0:" + serverPortStr)
+	log.Println("server listened at 0.0.0.0:" + serverPortStr)
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+serverPortStr, nil))
 }

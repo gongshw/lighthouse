@@ -10,7 +10,7 @@ import (
 func GetBaseFromUrl(url string) string {
 	u, err := urllib.Parse(url)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return ""
 	}
 	return u.Scheme + "://" + u.Host
