@@ -21,13 +21,12 @@ var CONFIG Configuration
 var inited bool
 
 var (
-	ERROR_CONF_INITED = errors.New("configuration inited already")
-	ERROR_LOAD_CONF   = errors.New("can't load configuration file")
+	ERROR_LOAD_CONF = errors.New("can't load configuration file")
 )
 
-func InitConfig(configFilePath string) error {
+func LoadConfig(configFilePath string) error {
 	if inited {
-		return ERROR_CONF_INITED
+		return nil
 	}
 	var err error
 	var configFile io.Reader

@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	err := conf.InitConfig("")
+	err := conf.LoadConfig("")
 	if err == nil {
 		web.Start()
 	} else {

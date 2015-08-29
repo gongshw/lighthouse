@@ -2,6 +2,7 @@ package hook
 
 import (
 	"github.com/gongshw/lighthouse/conf"
+	"log"
 	"regexp"
 )
 
@@ -52,7 +53,8 @@ func flushToken(htmlBuf *[]byte, tokenBuf []byte, base string) {
 			if fullUrlRegex.MatchString(token) {
 				token = fullUrlRegex.ReplaceAllString(token, serverBase+"/proxy?$1")
 			} else if nonSchemaUrlRegex.MatchString(token) {
-				token = fullUrlRegex.ReplaceAllString(token, serverBase+"/proxy?http:$1")
+				log.Println(token)
+				token = nonSchemaUrlRegex.ReplaceAllString(token, serverBase+"/proxy?http:$1")
 			} else if absoluteUrlRegex.MatchString(token) {
 				token = absoluteUrlRegex.ReplaceAllString(token, "$1"+serverBase+"/proxy?"+base+"$2")
 			}
