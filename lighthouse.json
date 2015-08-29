@@ -1,5 +1,5 @@
 {
     "StaicFileDir": "static",
-    "ServerBaseUrl": "http://localhost:8080/",
+    "ServerBaseUrl": "http://localhost:8080",
     "ServerPort": 8080
 }
