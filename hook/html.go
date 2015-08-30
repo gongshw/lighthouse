@@ -53,11 +53,12 @@ func flushToken(htmlBuf *[]byte, tokenBuf []byte, base string) {
 			if fullUrlRegex.MatchString(token) {
 				token = fullUrlRegex.ReplaceAllString(token, serverBase+"/proxy?$1")
 			} else if nonSchemaUrlRegex.MatchString(token) {
-				log.Println(token)
 				token = nonSchemaUrlRegex.ReplaceAllString(token, serverBase+"/proxy?http:$1")
 			} else if absoluteUrlRegex.MatchString(token) {
-				token = absoluteUrlRegex.ReplaceAllString(token, "$1"+serverBase+"/proxy?"+base+"$2")
+				log.Println(token)
+				token = absoluteUrlRegex.ReplaceAllString(token, "${1}"+serverBase+"/proxy?"+base+"$2")
 			}
+			// TODO handle relative link
 			tokenBuf = []byte(token)
 		} else if getTagName(token) == "head" {
 			tokenBuf = []byte(token + JS_HOOK_TAG)

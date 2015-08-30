@@ -1,7 +1,6 @@
 package web
 
 import (
-	"errors"
 	"fmt"
 	"github.com/gongshw/lighthouse/conf"
 	"github.com/gongshw/lighthouse/hook"
@@ -20,8 +19,6 @@ type Configuration struct {
 
 const _5MB = 5 * 1024 * 1024
 
-var ERROR_RESPONSE_TOO_LARGE = errors.New("responese too large")
-
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.RawQuery
 	resp, conErr := proxyRequest(r)
@@ -32,13 +29,12 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 	if size := resp.ContentLength; size > _5MB {
-		log.Fatal(ERROR_RESPONSE_TOO_LARGE)
 		fmt.Fprintf(w, "responese too large: %s", url)
 		return
 	}
 	w.Header().Add("Proxy-By", "gongshw/lighthouse")
 	for key, valueArray := range resp.Header {
-		if key == "Content-Length" {
+		if key == "Content-Length" || key == "Set-Cookie" {
 			continue
 		}
 		for _, value := range valueArray {
@@ -62,11 +58,25 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func proxyRequest(r *http.Request) (*http.Response, error) {
-	// TODO proxy METHOD and HEADER
+	// TODO proxy COOKIE
 	url := r.URL.RawQuery
+	client := &http.Client{}
 	log.Println("proxy " + url)
-	resp, conErr := http.Get(url)
-	return resp, conErr
+	req, err := http.NewRequest(r.Method, url, r.Body)
+	if err != nil {
+		return nil, err
+	}
+	for k, vs := range r.Header {
+		if k == "Cookie" || k == "User-Agent" {
+			//ignore
+		} else {
+			for _, v := range vs {
+				log.Println(k, v)
+				req.Header.Add(k, v)
+			}
+		}
+	}
+	return client.Do(req)
 }
 
 func headerIs(headerMap map[string][]string, headerKey string, headerValue string) bool {
