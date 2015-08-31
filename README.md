@@ -16,3 +16,6 @@ make a conf.json file at the work dir:
 ```
 
 run `$GOPATH/bin/lighthouse`
+
+
+visit `http(s)://your_server:8080/` from your restricted devices and enjoy!

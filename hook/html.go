@@ -39,15 +39,18 @@ func ParseHtml(html string, url string) string {
 	return string(htmlBuf)
 }
 
+var (
+	fullUrlRegex      = regexp.MustCompile("(https?):\\/\\/(([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?)")
+	nonSchemaUrlRegex = regexp.MustCompile("\\/\\/([\\da-z\\.-]+\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?)")
+	absoluteUrlRegex  = regexp.MustCompile("(\"\\s*)(\\/([\\/\\w \\.-]*)*\\/?)")
+)
+
 func flushToken(htmlBuf *[]byte, tokenBuf []byte, url string) {
-	// TODO proxy the favicon
 	var serverBase string = conf.CONFIG.ServerBaseUrl
 	var JS_HOOK_TAG = "\n<script src=\"" + serverBase + "/js/jsHook.js\" type=\"text/javascript\"></script>"
 	if len(tokenBuf) > 0 && tokenBuf[0] == '<' {
 		if token := string(tokenBuf); needProxy(token) != "" {
-			fullUrlRegex := regexp.MustCompile("(https?):\\/\\/(([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?)")
-			nonSchemaUrlRegex := regexp.MustCompile("\\/\\/([\\da-z\\.-]+\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?)")
-			absoluteUrlRegex := regexp.MustCompile("(\"\\s*)(\\/([\\/\\w \\.-]*)*\\/?)")
+
 			if fullUrlRegex.MatchString(token) {
 				token = fullUrlRegex.ReplaceAllString(token, serverBase+"/proxy/${1}/${2}")
 			} else if nonSchemaUrlRegex.MatchString(token) {
