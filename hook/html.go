@@ -39,28 +39,23 @@ func ParseHtml(html string, url string) string {
 	return string(htmlBuf)
 }
 
-var (
-	fullUrlRegex      = regexp.MustCompile("(https?):\\/\\/(([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?)")
-	nonSchemaUrlRegex = regexp.MustCompile("\\/\\/([\\da-z\\.-]+\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?)")
-	absoluteUrlRegex  = regexp.MustCompile("(\"\\s*)(\\/([\\/\\w \\.-]*)*\\/?)")
-)
-
 func flushToken(htmlBuf *[]byte, tokenBuf []byte, url string) {
 	var serverBase string = conf.CONFIG.ServerBaseUrl
 	var JS_HOOK_TAG = "\n<script src=\"" + serverBase + "/js/jsHook.js\" type=\"text/javascript\"></script>"
 	if len(tokenBuf) > 0 && tokenBuf[0] == '<' {
-		if token := string(tokenBuf); needProxy(token) != "" {
-			if fullUrlRegex.MatchString(token) {
-				token = fullUrlRegex.ReplaceAllString(token, serverBase+"/proxy/${1}/${2}")
-			} else if nonSchemaUrlRegex.MatchString(token) {
-				token = nonSchemaUrlRegex.ReplaceAllString(token, serverBase+"/proxy/http/$1")
-			} else if absoluteUrlRegex.MatchString(token) {
-				protocal, host := ParseBaseUrl(url)
-				rplcUrl := "${1}" + serverBase + "/proxy/" + protocal + "/" + host + "/" + "$2"
-				token = absoluteUrlRegex.ReplaceAllString(token, rplcUrl)
+		token := string(tokenBuf)
+		tagName := getTagName(token)
+		if attrrs := tagAttrToProxy[tagName]; len(attrrs) != 0 {
+			for _, attr := range attrrs {
+				attrPattern := regexp.MustCompile("(" + attr + "=\\\")([^\\\"]+)(\\\")")
+				if match := attrPattern.FindStringSubmatch(token); len(match) == 4 {
+					rawUrl := match[2]
+					proxiedUrl := GetProxiedUrl(rawUrl, url)
+					token = attrPattern.ReplaceAllString(token, "${1}"+proxiedUrl+"${3}")
+				}
 			}
 			tokenBuf = []byte(token)
-		} else if getTagName(token) == "head" {
+		} else if tagName == "head" {
 			tokenBuf = []byte(token + JS_HOOK_TAG)
 		}
 
@@ -78,15 +73,16 @@ func getTagName(token string) string {
 	}
 }
 
-func needProxy(token string) string {
-	tagToProxy := map[string]string{
-		"a":      "href",
-		"script": "src",
-		"link":   "href",
-		"base":   "href",
-		"img":    "src",
-		"meta":   "content",
-		"form":   "action",
+var tagAttrToProxy map[string][]string
+
+func init() {
+	tagAttrToProxy = map[string][]string{
+		"a":      []string{"href"},
+		"script": []string{"src"},
+		"link":   []string{"href"},
+		"base":   []string{"href"},
+		"img":    []string{"src"},
+		"meta":   []string{"content"},
+		"form":   []string{"action"},
 	}
-	return tagToProxy[getTagName(token)]
 }

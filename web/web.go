@@ -38,7 +38,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		if key == "Content-Length" || key == "Set-Cookie" {
 			//ignore
 		} else if key == "Location" {
-			w.Header().Set(key, hook.GetProxiedUrl(resp.Header.Get(key)))
+			w.Header().Set(key, hook.GetProxiedUrl(resp.Header.Get(key), url))
 		} else {
 			for _, value := range valueArray {
 				w.Header().Add(key, value)

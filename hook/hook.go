@@ -26,16 +26,23 @@ func ParseUrl(url string) (string, string) {
 	return u.Scheme, u.Host + u.RequestURI()
 }
 
-func GetProxiedUrl(url string) string {
+func GetProxiedUrl(url string, base string) string {
 	var serverBase string = conf.CONFIG.ServerBaseUrl
 	if strings.HasPrefix(url, "http") || strings.HasPrefix(url, "https") {
 		protocal, uri := ParseUrl(url)
 		return serverBase + "/proxy/" + protocal + "/" + uri
-	} else if strings.HasPrefix(url, "/") {
-		return "/proxy" + url
 	} else {
-		return url
+		protocal, host := ParseBaseUrl(base)
+		if strings.HasPrefix(url, "//") {
+			return GetProxiedUrl(protocal+":"+url, base)
+		} else if strings.HasPrefix(url, "/") {
+			return serverBase + "/proxy/" + protocal + "/" + host + url
+		} else {
+			// a relative url
+			return url
+		}
 	}
+	return url
 }
 
 func GetResouceDir(url string) string {
