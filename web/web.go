@@ -11,12 +11,6 @@ import (
 	"strings"
 )
 
-type Configuration struct {
-	StaicFileDir  string
-	ServerBaseUrl string
-	ServerPort    int
-}
-
 const _5MB = 5 * 1024 * 1024
 
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
@@ -32,6 +26,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "responese too large: %s", url)
 		return
 	}
+	// TODO proxy 30x redirect
 	w.Header().Add("Proxy-By", "gongshw/lighthouse")
 	for key, valueArray := range resp.Header {
 		if key == "Content-Length" || key == "Set-Cookie" {
@@ -60,23 +55,22 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 func proxyRequest(r *http.Request) (*http.Response, error) {
 	// TODO proxy COOKIE
 	url := r.URL.RawQuery
-	client := &http.Client{}
 	log.Println("proxy " + url)
 	req, err := http.NewRequest(r.Method, url, r.Body)
 	if err != nil {
 		return nil, err
 	}
 	for k, vs := range r.Header {
-		if k == "Cookie" || k == "User-Agent" {
+		if k == "Cookie" || k == "Accept-Encoding" {
 			//ignore
 		} else {
 			for _, v := range vs {
-				log.Println(k, v)
 				req.Header.Add(k, v)
 			}
 		}
 	}
-	return client.Do(req)
+	tr := &http.Transport{}
+	return tr.RoundTrip(req)
 }
 
 func headerIs(headerMap map[string][]string, headerKey string, headerValue string) bool {
