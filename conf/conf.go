@@ -8,12 +8,14 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"time"
 )
 
 type Configuration struct {
-	StaicFileDir  string
-	ServerBaseUrl string
-	ServerPort    int
+	StaicFileDir          string
+	ServerBaseUrl         string
+	ServerPort            int
+	ResponseTimeoutSecond time.Duration
 }
 
 var CONFIG Configuration

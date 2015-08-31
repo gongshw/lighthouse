@@ -7,9 +7,11 @@ import (
 	"github.com/gongshw/lighthouse/hook"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const _5MB = 5 * 1024 * 1024
@@ -22,7 +24,6 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp, conErr := proxyRequest(r)
-	log.Println("proxy " + url + " " + resp.Status)
 	if conErr != nil {
 		log.Println(conErr)
 		fmt.Fprintf(w, "connection error: %s", url)
@@ -33,6 +34,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "responese too large: %s", url)
 		return
 	}
+	log.Println(r.Method + " " + url + " " + resp.Status)
 	w.Header().Add("Proxy-By", "gongshw/lighthouse")
 	for key, valueArray := range resp.Header {
 		if key == "Content-Length" || key == "Set-Cookie" {
@@ -87,7 +89,11 @@ func proxyRequest(r *http.Request) (*http.Response, error) {
 			}
 		}
 	}
-	tr := &http.Transport{}
+	tr := &http.Transport{
+		Dial: (&net.Dialer{
+			Timeout: conf.CONFIG.ResponseTimeoutSecond * time.Second,
+		}).Dial,
+	}
 	return tr.RoundTrip(req)
 }
 

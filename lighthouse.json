@@ -1,5 +1,6 @@
 {
     "StaicFileDir": "static",
-    "ServerBaseUrl": "http://localhost:8080",
-    "ServerPort": 8080
+    "ServerBaseUrl": "",
+    "ServerPort": 8080,
+    "ResponseTimeoutSecond":5
 }
