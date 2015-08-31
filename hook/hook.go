@@ -7,13 +7,13 @@ import (
 	"strings"
 )
 
-func GetBaseFromUrl(url string) string {
+func ParseUrl(url string) (string, string) {
 	u, err := urllib.Parse(url)
 	if err != nil {
 		log.Println(err)
-		return ""
+		return "", ""
 	}
-	return u.Scheme + "://" + u.Host
+	return u.Scheme, u.Host
 }
 
 func GetResouceDir(url string) string {

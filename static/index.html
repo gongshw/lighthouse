@@ -5,14 +5,19 @@
     <script>
     function go() {
         var url = document.getElementById("url").value;
-        location.href = "/proxy?" + url;
+        var token = url.split("://");
+        if (token.length == 2) {
+            location.href = "/proxy/" + token[0] + "/" + token[1];
+        } else {
+            alert("wrong url");
+        };
     }
     </script>
 </head>
 
 <body>
     <input type="text" id="url"></input>
-    <button onclick="go()">转到</button>
+    <button onclick="go()">Go!</button>
 </body>
 
 </html>

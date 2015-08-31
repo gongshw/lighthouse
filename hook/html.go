@@ -2,12 +2,10 @@ package hook
 
 import (
 	"github.com/gongshw/lighthouse/conf"
-	"log"
 	"regexp"
 )
 
 func ParseHtml(html string, url string) string {
-	base := GetBaseFromUrl(url)
 	i := 0
 	var htmlBuf []byte
 	var tokenBuf []byte
@@ -16,7 +14,7 @@ func ParseHtml(html string, url string) string {
 		if i >= htmlLength {
 			// end of html, flush tokenBuf
 			if len(tokenBuf) > 0 {
-				flushToken(&htmlBuf, tokenBuf, base)
+				flushToken(&htmlBuf, tokenBuf, url)
 			}
 			break
 		}
@@ -27,13 +25,13 @@ func ParseHtml(html string, url string) string {
 			i++
 		} else if b == '<' {
 			// new tag token start
-			flushToken(&htmlBuf, tokenBuf, base)
+			flushToken(&htmlBuf, tokenBuf, url)
 			tokenBuf = tokenBuf[:0]
 		} else {
 			tokenBuf = append(tokenBuf, b)
 			i++
 			if b == '>' {
-				flushToken(&htmlBuf, tokenBuf, base)
+				flushToken(&htmlBuf, tokenBuf, url)
 				tokenBuf = tokenBuf[:0]
 			}
 		}
@@ -41,24 +39,24 @@ func ParseHtml(html string, url string) string {
 	return string(htmlBuf)
 }
 
-func flushToken(htmlBuf *[]byte, tokenBuf []byte, base string) {
+func flushToken(htmlBuf *[]byte, tokenBuf []byte, url string) {
 	// TODO proxy the favicon
 	var serverBase string = conf.CONFIG.ServerBaseUrl
 	var JS_HOOK_TAG = "\n<script src=\"" + serverBase + "/js/jsHook.js\" type=\"text/javascript\"></script>"
 	if len(tokenBuf) > 0 && tokenBuf[0] == '<' {
 		if token := string(tokenBuf); needProxy(token) != "" {
-			fullUrlRegex := regexp.MustCompile("(https?:\\/\\/([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?)")
-			nonSchemaUrlRegex := regexp.MustCompile("(\\/\\/([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?)")
+			fullUrlRegex := regexp.MustCompile("(https?):\\/\\/(([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?)")
+			nonSchemaUrlRegex := regexp.MustCompile("\\/\\/([\\da-z\\.-]+\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?)")
 			absoluteUrlRegex := regexp.MustCompile("(\"\\s*)(\\/([\\/\\w \\.-]*)*\\/?)")
 			if fullUrlRegex.MatchString(token) {
-				token = fullUrlRegex.ReplaceAllString(token, serverBase+"/proxy?$1")
+				token = fullUrlRegex.ReplaceAllString(token, serverBase+"/proxy/${1}/${2}")
 			} else if nonSchemaUrlRegex.MatchString(token) {
-				token = nonSchemaUrlRegex.ReplaceAllString(token, serverBase+"/proxy?http:$1")
+				token = nonSchemaUrlRegex.ReplaceAllString(token, serverBase+"/proxy/http/$1")
 			} else if absoluteUrlRegex.MatchString(token) {
-				log.Println(token)
-				token = absoluteUrlRegex.ReplaceAllString(token, "${1}"+serverBase+"/proxy?"+base+"$2")
+				protocal, host := ParseUrl(url)
+				rplcUrl := "${1}" + serverBase + "/proxy/" + protocal + "/" + host + "/" + "$2"
+				token = absoluteUrlRegex.ReplaceAllString(token, rplcUrl)
 			}
-			// TODO handle relative link
 			tokenBuf = []byte(token)
 		} else if getTagName(token) == "head" {
 			tokenBuf = []byte(token + JS_HOOK_TAG)

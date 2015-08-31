@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gongshw/lighthouse/conf"
 	"github.com/gongshw/lighthouse/hook"
@@ -14,7 +15,12 @@ import (
 const _5MB = 5 * 1024 * 1024
 
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
-	url := r.URL.RawQuery
+	url, pathErr := proxyUrl(r.URL.RequestURI())
+	if pathErr != nil {
+		log.Println(pathErr)
+		fmt.Fprintf(w, "path error: %s", r.URL.RawPath)
+		return
+	}
 	resp, conErr := proxyRequest(r)
 	if conErr != nil {
 		log.Println(conErr)
@@ -45,16 +51,26 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if headerIs(resp.Header, "Content-Type", "text/html") {
 		w.Write([]byte(hook.ParseHtml(string(body[:]), url)))
-	} else if headerIs(resp.Header, "Content-Type", "text/css") {
-		w.Write([]byte(hook.ParseCss(string(body[:]), url)))
 	} else {
 		w.Write(body)
 	}
 }
 
+func proxyUrl(path string) (string, error) {
+	token := strings.SplitN(path, "/", 5)
+	if len(token) < 4 {
+		return "", errors.New("illegal path: " + path)
+	} else if len(token) == 4 {
+		return token[2] + "://" + token[3], nil
+	} else if len(token) == 5 {
+		return token[2] + "://" + token[3] + "/" + token[4], nil
+	}
+	return "", errors.New("illegal path: " + path)
+}
+
 func proxyRequest(r *http.Request) (*http.Response, error) {
 	// TODO proxy COOKIE
-	url := r.URL.RawQuery
+	url, _ := proxyUrl(r.URL.RequestURI())
 	log.Println("proxy " + url)
 	req, err := http.NewRequest(r.Method, url, r.Body)
 	if err != nil {
@@ -79,7 +95,7 @@ func headerIs(headerMap map[string][]string, headerKey string, headerValue strin
 }
 
 func Start() {
-	http.HandleFunc("/proxy", proxyHandler)
+	http.HandleFunc("/proxy/", proxyHandler)
 	http.Handle("/", http.FileServer(http.Dir(conf.CONFIG.StaicFileDir)))
 	serverPortStr := strconv.Itoa(conf.CONFIG.ServerPort)
 	log.Println("server listened at 0.0.0.0:" + serverPortStr)
