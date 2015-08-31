@@ -22,6 +22,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp, conErr := proxyRequest(r)
+	log.Println("proxy " + url + " " + resp.Status)
 	if conErr != nil {
 		log.Println(conErr)
 		fmt.Fprintf(w, "connection error: %s", url)
@@ -32,21 +33,23 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "responese too large: %s", url)
 		return
 	}
-	// TODO proxy 30x redirect
 	w.Header().Add("Proxy-By", "gongshw/lighthouse")
 	for key, valueArray := range resp.Header {
 		if key == "Content-Length" || key == "Set-Cookie" {
-			continue
-		}
-		for _, value := range valueArray {
-			w.Header().Add(key, value)
+			//ignore
+		} else if key == "Location" {
+			w.Header().Set(key, hook.GetProxiedUrl(resp.Header.Get(key)))
+		} else {
+			for _, value := range valueArray {
+				w.Header().Add(key, value)
+			}
 		}
 	}
 	w.WriteHeader(resp.StatusCode)
 	body, readErr := ioutil.ReadAll(resp.Body)
 	if readErr != nil {
 		log.Println(readErr)
-		fmt.Fprintf(w, "ead content error: %s", url)
+		fmt.Fprintf(w, "read content error: %s", url)
 		return
 	}
 	if headerIs(resp.Header, "Content-Type", "text/html") {
@@ -71,7 +74,6 @@ func proxyUrl(path string) (string, error) {
 func proxyRequest(r *http.Request) (*http.Response, error) {
 	// TODO proxy COOKIE
 	url, _ := proxyUrl(r.URL.RequestURI())
-	log.Println("proxy " + url)
 	req, err := http.NewRequest(r.Method, url, r.Body)
 	if err != nil {
 		return nil, err

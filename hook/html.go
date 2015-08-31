@@ -50,13 +50,12 @@ func flushToken(htmlBuf *[]byte, tokenBuf []byte, url string) {
 	var JS_HOOK_TAG = "\n<script src=\"" + serverBase + "/js/jsHook.js\" type=\"text/javascript\"></script>"
 	if len(tokenBuf) > 0 && tokenBuf[0] == '<' {
 		if token := string(tokenBuf); needProxy(token) != "" {
-
 			if fullUrlRegex.MatchString(token) {
 				token = fullUrlRegex.ReplaceAllString(token, serverBase+"/proxy/${1}/${2}")
 			} else if nonSchemaUrlRegex.MatchString(token) {
 				token = nonSchemaUrlRegex.ReplaceAllString(token, serverBase+"/proxy/http/$1")
 			} else if absoluteUrlRegex.MatchString(token) {
-				protocal, host := ParseUrl(url)
+				protocal, host := ParseBaseUrl(url)
 				rplcUrl := "${1}" + serverBase + "/proxy/" + protocal + "/" + host + "/" + "$2"
 				token = absoluteUrlRegex.ReplaceAllString(token, rplcUrl)
 			}
