@@ -2,7 +2,6 @@ package web
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gongshw/lighthouse/conf"
 	"github.com/gongshw/lighthouse/hook"
 	"io/ioutil"
@@ -20,18 +19,18 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	url, pathErr := proxyUrl(r.URL.RequestURI())
 	if pathErr != nil {
 		log.Println(pathErr)
-		fmt.Fprintf(w, "path error: %s", r.URL.RawPath)
+		ShowError(w, "path error", r.URL.RawPath)
 		return
 	}
 	resp, conErr := proxyRequest(r)
 	if conErr != nil {
 		log.Println(conErr)
-		fmt.Fprintf(w, "connection error: %s", url)
+		ShowError(w, "connection error", url)
 		return
 	}
 	defer resp.Body.Close()
 	if size := resp.ContentLength; size > _5MB {
-		fmt.Fprintf(w, "responese too large: %s", url)
+		ShowError(w, "responese too large", url)
 		return
 	}
 	log.Println(r.Method + " " + url + " " + resp.Status)
@@ -51,7 +50,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	body, readErr := ioutil.ReadAll(resp.Body)
 	if readErr != nil {
 		log.Println(readErr)
-		fmt.Fprintf(w, "read content error: %s", url)
+		ShowError(w, "read content error", url)
 		return
 	}
 	if headerIs(resp.Header, "Content-Type", "text/html") {
