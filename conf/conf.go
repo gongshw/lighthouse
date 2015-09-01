@@ -16,6 +16,8 @@ type Configuration struct {
 	ServerBaseUrl         string
 	ServerPort            int
 	ResponseTimeoutSecond time.Duration
+	FilterMode            string
+	FilterFile            string
 }
 
 var CONFIG Configuration
@@ -45,6 +47,9 @@ func LoadConfig(configFilePath string) error {
 	if err != nil {
 		return err
 	}
+	if validateErr := validateConfig(); validateConfig() != nil {
+		return validateErr
+	}
 	inited = true
 	return nil
 }
@@ -70,10 +75,15 @@ func tryConfigFilePath(configFilePath string) (string, error) {
 		}
 		for _, path := range posibleConfigFiles {
 			if _, err := os.Stat(path); err == nil {
-				log.Println("found log file at " + path)
+				log.Println("load configuration file from " + path)
 				return path, nil
 			}
 		}
 		return "", ERROR_LOAD_CONF
 	}
+}
+
+func validateConfig() error {
+	// TODO
+	return nil
 }

@@ -1,0 +1,9 @@
+google\.com$
+stackoverflow\.com$
+
+wikipedia\.org$
+
+v2ex\.com$
+
+t66y\.com$
+

@@ -22,6 +22,11 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		ShowError(w, "path error", r.URL.RawPath)
 		return
 	}
+	if !UrlNeedProxy(url) {
+		log.Println("no need to proxy: " + url)
+		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+		return
+	}
 	resp, conErr := proxyRequest(r)
 	if conErr != nil {
 		log.Println(conErr)
@@ -102,6 +107,9 @@ func headerIs(headerMap map[string][]string, headerKey string, headerValue strin
 }
 
 func Start() {
+	if initFilterErr := InitFilter(); initFilterErr != nil {
+		log.Fatal(initFilterErr)
+	}
 	http.HandleFunc("/proxy/", proxyHandler)
 	http.Handle("/", http.FileServer(http.Dir(conf.CONFIG.StaicFileDir)))
 	serverPortStr := strconv.Itoa(conf.CONFIG.ServerPort)
