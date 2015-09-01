@@ -5,19 +5,61 @@
     <script>
     function go() {
         var url = document.getElementById("url").value;
-        var token = url.split("://");
-        if (token.length == 2) {
-            location.href = "/proxy/" + token[0] + "/" + token[1];
-        } else {
-            alert("wrong url");
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'http://' + url;
         };
+        var expression = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
+        var regex = new RegExp(expression);
+        if (url.match(regex)) {
+            var token = url.split("://");
+            if (token.length == 2) {
+                location.href = "/proxy/" + token[0] + "/" + token[1];
+                return;
+            }
+        }
+        alert('wrong url');
     }
     </script>
+    <style>
+    html {
+        height: 60%;
+    }
+    
+    body {
+        height: 100%;
+        display: -webkit-flex;
+        display: flex;
+        -webkit-align-items: center;
+        align-items: center;
+        -webkit-justify-content: center;
+        justify-content: center;
+    }
+    
+    h1 {
+        text-align: center;
+    }
+    
+    input {
+        width: 400px;
+        height: 30px;
+        font-size: 18px;
+    }
+    
+    button {
+        height: 36px;
+        width: 80px;
+    }
+    </style>
 </head>
 
 <body>
-    <input type="text" id="url"></input>
-    <button onclick="go()">Go!</button>
+    <div>
+        <h1>Lighthouse</h1>
+        <form onsubmit="go();return false;" autocomplete="off">
+            <input type="text" id="url"></input>
+            <button>Go!</button>
+        </form>
+    </div>
 </body>
 
 </html>
