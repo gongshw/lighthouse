@@ -13,32 +13,35 @@ import (
 	"time"
 )
 
-const _5MB = 5 * 1024 * 1024
-
 func proxyHandler(w http.ResponseWriter, r *http.Request) {
-	url, pathErr := proxyUrl(r.URL.RequestURI())
+	uri := r.URL.RequestURI()
+	if pathUrlHostOnly(uri) {
+		http.Redirect(w, r, uri+"/", http.StatusTemporaryRedirect)
+		return
+	}
+	url, pathErr := proxyUrl(uri)
 	if pathErr != nil {
 		log.Println(pathErr)
-		ShowError(w, "path error", r.URL.RawPath)
+		ShowError(w, "path error", uri)
 		return
 	}
 	if !UrlNeedProxy(url) {
-		log.Println("no need to proxy: " + url)
+		log.Printf("no need to proxy: %s", url)
 		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 		return
 	}
 	resp, conErr := proxyRequest(r)
 	if conErr != nil {
-		log.Println(conErr)
+		log.Printf("connection error:[%s,%s]", conErr, url)
 		ShowError(w, "connection error", url)
 		return
 	}
 	defer resp.Body.Close()
-	if size := resp.ContentLength; size > _5MB {
+	if size := resp.ContentLength; size > conf.CONFIG.ContentLengthLimit {
 		ShowError(w, "responese too large", url)
 		return
 	}
-	log.Println(r.Method + " " + url + " " + resp.Status)
+	log.Printf("%s %s %s", r.Method, url, resp.Status)
 	w.Header().Add("Proxy-By", "gongshw/lighthouse")
 	for key, valueArray := range resp.Header {
 		if key == "Content-Length" || key == "Set-Cookie" {
@@ -67,14 +70,14 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 
 func proxyUrl(path string) (string, error) {
 	token := strings.SplitN(path, "/", 5)
-	if len(token) < 4 {
-		return "", errors.New("illegal path: " + path)
-	} else if len(token) == 4 {
-		return token[2] + "://" + token[3], nil
-	} else if len(token) == 5 {
+	if len(token) == 5 {
 		return token[2] + "://" + token[3] + "/" + token[4], nil
 	}
 	return "", errors.New("illegal path: " + path)
+}
+
+func pathUrlHostOnly(uri string) bool {
+	return strings.Count(uri, "/") < 4
 }
 
 func proxyRequest(r *http.Request) (*http.Response, error) {
@@ -113,6 +116,6 @@ func Start() {
 	http.HandleFunc("/proxy/", proxyHandler)
 	http.Handle("/", http.FileServer(http.Dir(conf.CONFIG.StaicFileDir)))
 	serverPortStr := strconv.Itoa(conf.CONFIG.ServerPort)
-	log.Println("server listened at 0.0.0.0:" + serverPortStr)
+	log.Printf("server listened at 0.0.0.0:%s", serverPortStr)
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+serverPortStr, nil))
 }

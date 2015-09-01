@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+const _5MB = 5 * 1024 * 1024
+
 type Configuration struct {
 	StaicFileDir          string
 	ServerBaseUrl         string
@@ -18,9 +20,17 @@ type Configuration struct {
 	ResponseTimeoutSecond time.Duration
 	FilterMode            string
 	FilterFile            string
+	ContentLengthLimit    int64
 }
 
-var CONFIG Configuration
+func validateConfig() error {
+	// TODO
+	return nil
+}
+
+var CONFIG Configuration = Configuration{
+	ContentLengthLimit: _5MB,
+}
 
 var inited bool
 
@@ -81,9 +91,4 @@ func tryConfigFilePath(configFilePath string) (string, error) {
 		}
 		return "", ERROR_LOAD_CONF
 	}
-}
-
-func validateConfig() error {
-	// TODO
-	return nil
 }
