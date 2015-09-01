@@ -39,26 +39,42 @@ func ParseHtml(html string, url string) string {
 	return string(htmlBuf)
 }
 
+var (
+	styleTokenPattern = regexp.MustCompile("(style\\s*=\\s*\\\")([^\\\"]+)(\\\")")
+)
+
 func flushToken(htmlBuf *[]byte, tokenBuf []byte, url string) {
 	var serverBase string = conf.CONFIG.ServerBaseUrl
 	var JS_HOOK_TAG = "\n<script src=\"" + serverBase + "/js/jsHook.js\" type=\"text/javascript\"></script>"
 	if len(tokenBuf) > 0 && tokenBuf[0] == '<' {
 		token := string(tokenBuf)
-		tagName := getTagName(token)
-		if attrrs := tagAttrToProxy[tagName]; len(attrrs) != 0 {
-			for _, attr := range attrrs {
-				attrPattern := regexp.MustCompile("(" + attr + "=\\\")([^\\\"]+)(\\\")")
-				if match := attrPattern.FindStringSubmatch(token); len(match) == 4 {
-					rawUrl := match[2]
-					proxiedUrl := GetProxiedUrl(rawUrl, url)
-					token = attrPattern.ReplaceAllString(token, "${1}"+proxiedUrl+"${3}")
+		if tagName := getTagName(token); tagName != "" && tagName[0] != '/' {
+			// a tag open
+
+			if match := styleTokenPattern.FindStringSubmatch(token); len(match) == 4 {
+				css := match[2]
+				token = styleTokenPattern.ReplaceAllString(token, "${1}"+ParseCss(css, url)+"${3}")
+			}
+
+			if attrrs := tagAttrToProxy[tagName]; len(attrrs) != 0 {
+				for _, attr := range attrrs {
+					// replace all links in tag attr
+					attrPattern := regexp.MustCompile("(" + attr + "=\\\")([^\\\"]+)(\\\")")
+					if match := attrPattern.FindStringSubmatch(token); len(match) == 4 {
+						rawUrl := match[2]
+						proxiedUrl := GetProxiedUrl(rawUrl, url)
+						token = attrPattern.ReplaceAllString(token, "${1}"+proxiedUrl+"${3}")
+					}
 				}
 			}
-			tokenBuf = []byte(token)
-		} else if tagName == "head" {
-			tokenBuf = []byte(token + JS_HOOK_TAG)
-		}
 
+			if tagName == "head" {
+				// inject js
+				token = token + JS_HOOK_TAG
+			}
+
+			tokenBuf = []byte(token)
+		}
 	}
 	*htmlBuf = append(*htmlBuf, tokenBuf...)
 }
