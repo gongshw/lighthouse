@@ -5,7 +5,6 @@
         //disable all ajax request
         _raw_send_method = XMLHttpRequest.prototype.send
         XMLHttpRequest.prototype.send = function() {}
-
-        
+        document.write('<script src="/js/statusBar.js" type="text/javascript"></script>');
     };
 })();
