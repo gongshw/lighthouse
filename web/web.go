@@ -42,29 +42,18 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("%s %s %s", r.Method, url, resp.Status)
-	w.Header().Add("Proxy-By", "gongshw/lighthouse")
-	for key, valueArray := range resp.Header {
-		if key == "Content-Length" || key == "Set-Cookie" {
-			//ignore
-		} else if key == "Location" {
-			w.Header().Set(key, hook.GetProxiedUrl(resp.Header.Get(key), url))
-		} else {
-			for _, value := range valueArray {
-				w.Header().Add(key, value)
-			}
-		}
-	}
-	w.WriteHeader(resp.StatusCode)
-	body, readErr := ioutil.ReadAll(resp.Body)
-	if readErr != nil {
-		log.Println(readErr)
-		ShowError(w, "read content error", url)
-		return
-	}
-	if headerIs(resp.Header, "Content-Type", "text/html") {
-		w.Write([]byte(hook.ParseHtml(string(body[:]), url)))
+	proxyResponse(w, resp, url)
+}
+
+func detecthander(w http.ResponseWriter, r *http.Request) {
+	uri := r.URL.RequestURI()
+	url, pathErr := proxyUrl(uri)
+	if pathErr != nil {
+		ShowError(w, "path error", uri)
+	} else if !UrlNeedProxy(url) {
+		ShowError(w, "url  blocked by admin", url)
 	} else {
-		w.Write(body)
+		http.Redirect(w, r, hook.GetProxiedUrl(url, ""), http.StatusTemporaryRedirect)
 	}
 }
 
@@ -72,6 +61,8 @@ func proxyUrl(path string) (string, error) {
 	token := strings.SplitN(path, "/", 5)
 	if len(token) == 5 {
 		return token[2] + "://" + token[3] + "/" + token[4], nil
+	} else if len(token) == 4 {
+		return token[2] + "://" + token[3] + "/", nil
 	}
 	return "", errors.New("illegal path: " + path)
 }
@@ -104,6 +95,33 @@ func proxyRequest(r *http.Request) (*http.Response, error) {
 	return tr.RoundTrip(req)
 }
 
+func proxyResponse(w http.ResponseWriter, resp *http.Response, url string) {
+	w.Header().Add("Proxy-By", "gongshw/lighthouse")
+	for key, valueArray := range resp.Header {
+		if key == "Content-Length" || key == "Set-Cookie" {
+			//ignore
+		} else if key == "Location" {
+			w.Header().Set(key, hook.GetProxiedUrl(resp.Header.Get(key), url))
+		} else {
+			for _, value := range valueArray {
+				w.Header().Add(key, value)
+			}
+		}
+	}
+	w.WriteHeader(resp.StatusCode)
+	body, readErr := ioutil.ReadAll(resp.Body)
+	if readErr != nil {
+		log.Println(readErr)
+		ShowError(w, "read content error", url)
+		return
+	}
+	if headerIs(resp.Header, "Content-Type", "text/html") {
+		w.Write([]byte(hook.ParseHtml(string(body[:]), url)))
+	} else {
+		w.Write(body)
+	}
+}
+
 func headerIs(headerMap map[string][]string, headerKey string, headerValue string) bool {
 	header, exist := headerMap[headerKey]
 	return exist && len(header) == 1 && strings.HasPrefix(header[0], headerValue)
@@ -114,6 +132,7 @@ func Start() {
 		log.Fatal(initFilterErr)
 	}
 	http.HandleFunc("/proxy/", proxyHandler)
+	http.HandleFunc("/detect/", detecthander)
 	http.Handle("/", http.FileServer(http.Dir(conf.CONFIG.StaicFileDir)))
 	serverPortStr := strconv.Itoa(conf.CONFIG.ServerPort)
 	log.Printf("server listened at 0.0.0.0:%s", serverPortStr)
