@@ -6,6 +6,7 @@
     width: 180px;
     border: gray 2px solid;
     box-sizing: border-box;
+    background-color: white;
     left: 0;
     transition: left 0.2s ease;
 }
@@ -14,12 +15,17 @@
     left: -180px;
 }
 
+#lighthouseMenu .title a{
+    color: white;
+    text-decoration: none;
+}
+
 #lighthouseMenu .title,
-#lighthouseMenu a {
+#lighthouseMenu .links a {
     padding-left: 5px;
 }
 
-#lighthouseMenu a {
+#lighthouseMenu .links  a {
     display: block;
     line-height: 14px;
     margin-top: 8px;
@@ -32,7 +38,7 @@
 #lighthouseMenu .title {
     background-color: gray;
     color: white;
-    width: 120px;
+    width: 80px;
     border-bottom-right-radius: 7px;
 }
 

@@ -2,7 +2,7 @@
     document.addEventListener("DOMContentLoaded", function(event) {
 
         var html = '<div id="lighthouseMenu" class="closed">' +
-            '<div class="title">Lighthouse v1.0</div>' +
+            '<div class="title"><a href="https://github.com/gongshw/lighthouse">Lighthouse</a></div>' +
             '<div class="links"><a href="/">Go to lighthouse home</a>' +
             '<a href="javascript:void(0)">Visit this page directly</a></div>' +
             '<span id="menuToggle" title="点击展开Lighthouse菜单"></span>' +
