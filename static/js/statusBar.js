@@ -1,10 +1,16 @@
 (function() {
+
+    function getRawUrl() {
+        var token = location.href.match(/\/proxy\/(\w+)\/(.+)/);
+        return token[1] + '://' + token[2].replace('"', escape('"'))
+    }
+
     document.addEventListener("DOMContentLoaded", function(event) {
 
         var html = '<div class="reset-this"><div id="lighthouseMenu" class="closed">' +
             '<div class="title"><a href="https://github.com/gongshw/lighthouse">Lighthouse</a></div>' +
             '<div class="links"><a href="/">Go to lighthouse home</a>' +
-            '<a href="javascript:void(0)">Visit this page directly</a></div>' +
+            '<a href="' + getRawUrl() + '">Visit this page directly</a></div>' +
             '<span id="menuToggle" title="点击展开Lighthouse菜单"></span>' +
             '</div></div>';
         document.body.innerHTML += html;
