@@ -1,37 +1,69 @@
-#toggleMenu {
-    font-size: 24pt;
-    cursor: pointer;
+#lighthouseMenu {
     position: absolute;
     top: 40%;
     z-index: 999;
     height: 80px;
-    width: 6px;
+    width: 180px;
+    border: gray 2px solid;
+    box-sizing: border-box;
+    left: 0;
+    transition: left 0.2s ease;
+}
+
+#lighthouseMenu.closed {
+    left: -180px;
+}
+
+#lighthouseMenu .title,
+#lighthouseMenu a {
+    padding-left: 5px;
+}
+
+#lighthouseMenu a {
+    display: block;
+    line-height: 14px;
+    margin-top: 8px;
+}
+
+#lighthouseMenu .links {
+    margin-top: 5px;
+}
+
+#lighthouseMenu .title {
     background-color: gray;
-    border-top-right-radius: 7px;
+    color: white;
+    width: 120px;
     border-bottom-right-radius: 7px;
 }
 
-#toggleMenu:after {
-    width: 0;
-    height: 0;
-    border-left: 7px solid white;
-    content: "";
-    position: relative;
-    top: 22px;
-    border-top: 5px solid transparent;
-    border-bottom: 5px solid transparent;
-    font-size: 0;
+#menuToggle {
+    cursor: pointer;
+    height: 80px;
+    width: 15px;
+    background-color: gray;
+    border-top-right-radius: 7px;
+    border-bottom-right-radius: 7px;
+    margin-left: 177px;
+    position: absolute;
+    top: -2px;
 }
 
-#toggleMenu:before {
+#menuToggle:after {
     width: 0;
     height: 0;
-    border-right: 7px solid white;
-    content: "";
-    position: relative;
     top: 22px;
     border-top: 5px solid transparent;
     border-bottom: 5px solid transparent;
     font-size: 0;
-    display: none;
+    content: "o";
+    position: relative;
+    left: 4px;
+}
+
+#lighthouseMenu.closed #menuToggle:after {
+    border-left: 7px solid white;
+}
+
+#lighthouseMenu.opened #menuToggle:after {
+    border-right: 7px solid white;
 }
