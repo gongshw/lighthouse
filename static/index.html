@@ -14,7 +14,7 @@
         if (url.match(regex)) {
             var token = url.split("://");
             if (token.length == 2) {
-                location.href = "/proxy/" + token[0] + "/" + token[1];
+                location.href = "/detect/" + token[0] + "/" + token[1];
                 return;
             }
         }

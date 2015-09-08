@@ -17,6 +17,11 @@ const (
 	FILTER_MODE_BLACK_LIST = iota
 )
 
+const (
+	BLOCK_ACTION_REDIRECT  = iota
+	BLOCK_ACTION_SHOW_INFO = iota
+)
+
 var (
 	filterInited = false
 
