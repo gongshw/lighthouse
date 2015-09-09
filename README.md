@@ -1,5 +1,7 @@
 # lighthouse 
 
+[![Build Status](https://travis-ci.org/gongshw/lighthouse.svg)](https://travis-ci.org/gongshw/lighthouse)
+
 install golang
 
 run `go get github.com/gongshw/lighthouse`
