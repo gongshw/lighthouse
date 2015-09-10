@@ -109,16 +109,19 @@ func proxyResponse(w http.ResponseWriter, resp *http.Response, url string) {
 		}
 	}
 	w.WriteHeader(resp.StatusCode)
-	body, readErr := ioutil.ReadAll(resp.Body)
-	if readErr != nil {
+
+	var body []byte
+	var readError error
+	if headerIs(resp.Header, "Content-Type", "text/html") {
+		body, readErr := hook.ParseHtml(resp.Body, url)
+	} else {
+		body, readErr := ioutil.ReadAll(resp.Body)
+	}
+	if readErr == nil {
+		w.Write(body)
+	} else {
 		log.Println(readErr)
 		ShowError(w, "read content error", url)
-		return
-	}
-	if headerIs(resp.Header, "Content-Type", "text/html") {
-		w.Write([]byte(hook.ParseHtml(string(body[:]), url)))
-	} else {
-		w.Write(body)
 	}
 }
 

@@ -2,10 +2,12 @@ package hook
 
 import (
 	"github.com/gongshw/lighthouse/conf"
+	"golang.org/x/net/html"
+	"io"
 	"regexp"
 )
 
-func ParseHtml(html string, url string) string {
+func ParseHtmlOld(html string, url string) string {
 	i := 0
 	var htmlBuf []byte
 	var tokenBuf []byte
@@ -37,6 +39,23 @@ func ParseHtml(html string, url string) string {
 		}
 	}
 	return string(htmlBuf)
+}
+
+func ParseHtml(r io.Reader, url string) ([]byte, error) {
+	z := html.NewTokenizer(r)
+	newHtml := make([]byte)
+	for {
+		tt := z.Next()
+		switch tt {
+		case ErrorToken:
+			return "", z.Err()
+		case TextToken:
+			flushToken(newHtml, z.Raw(), url)
+		case StartTagToken, EndTagToken:
+			flushToken(newHtml, z.Raw(), url)
+		}
+	}
+	return newHtml, nil
 }
 
 var (
