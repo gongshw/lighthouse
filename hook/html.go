@@ -5,13 +5,16 @@ import (
 	"golang.org/x/net/html"
 	"io"
 	"regexp"
+	"strings"
 )
 
 func ParseHtml(r io.Reader, url string) ([]byte, error) {
 	z := html.NewTokenizer(r)
 	var newHtml []byte
+	lastTag := ""
 	for {
 		tt := z.Next()
+		rawHtmlBytes := z.Raw()
 		switch tt {
 		case html.ErrorToken:
 			e := z.Err()
@@ -20,10 +23,24 @@ func ParseHtml(r io.Reader, url string) ([]byte, error) {
 			} else {
 				return make([]byte, 0), z.Err()
 			}
-		case html.TextToken, html.DoctypeToken, html.CommentToken:
-			newHtml = append(newHtml, z.Raw()...)
-		case html.StartTagToken, html.EndTagToken, html.SelfClosingTagToken:
+		case html.TextToken:
+			rawHtml := strings.TrimSpace(string(rawHtmlBytes[:]))
+			if len(rawHtml) > 0 && lastTag == "style" {
+				newCss := ParseCss(rawHtml, url)
+				newHtml = append(newHtml, []byte(newCss)...)
+			} else {
+				newHtml = append(newHtml, rawHtmlBytes...)
+			}
+		case html.DoctypeToken, html.CommentToken, html.EndTagToken:
+			newHtml = append(newHtml, rawHtmlBytes...)
+		case html.StartTagToken, html.SelfClosingTagToken:
 			flushToken(&newHtml, z, url)
+		}
+		if tt == html.StartTagToken {
+			lastTagByte, _ := z.TagName()
+			lastTag = string(lastTagByte[:])
+		} else {
+			lastTag = ""
 		}
 	}
 }
@@ -61,6 +78,7 @@ func flushToken(htmlBuf *[]byte, tz *html.Tokenizer, url string) {
 			if tagName == "head" {
 				// inject js
 				token = token + JS_HOOK_TAG
+
 			}
 
 			tokenRaw = []byte(token)
