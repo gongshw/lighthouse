@@ -111,11 +111,11 @@ func proxyResponse(w http.ResponseWriter, resp *http.Response, url string) {
 	w.WriteHeader(resp.StatusCode)
 
 	var body []byte
-	var readError error
+	var readErr error
 	if headerIs(resp.Header, "Content-Type", "text/html") {
-		body, readErr := hook.ParseHtml(resp.Body, url)
+		body, readErr = hook.ParseHtml(resp.Body, url)
 	} else {
-		body, readErr := ioutil.ReadAll(resp.Body)
+		body, readErr = ioutil.ReadAll(resp.Body)
 	}
 	if readErr == nil {
 		w.Write(body)

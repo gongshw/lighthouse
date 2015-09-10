@@ -7,66 +7,37 @@ import (
 	"regexp"
 )
 
-func ParseHtmlOld(html string, url string) string {
-	i := 0
-	var htmlBuf []byte
-	var tokenBuf []byte
-	htmlLength := len(html)
-	for {
-		if i >= htmlLength {
-			// end of html, flush tokenBuf
-			if len(tokenBuf) > 0 {
-				flushToken(&htmlBuf, tokenBuf, url)
-			}
-			break
-		}
-		b := html[i]
-		if len(tokenBuf) == 0 {
-			// new token
-			tokenBuf = append(tokenBuf, b)
-			i++
-		} else if b == '<' {
-			// new tag token start
-			flushToken(&htmlBuf, tokenBuf, url)
-			tokenBuf = tokenBuf[:0]
-		} else {
-			tokenBuf = append(tokenBuf, b)
-			i++
-			if b == '>' {
-				flushToken(&htmlBuf, tokenBuf, url)
-				tokenBuf = tokenBuf[:0]
-			}
-		}
-	}
-	return string(htmlBuf)
-}
-
 func ParseHtml(r io.Reader, url string) ([]byte, error) {
 	z := html.NewTokenizer(r)
-	newHtml := make([]byte)
+	var newHtml []byte
 	for {
 		tt := z.Next()
 		switch tt {
-		case ErrorToken:
-			return "", z.Err()
-		case TextToken:
-			flushToken(newHtml, z.Raw(), url)
-		case StartTagToken, EndTagToken:
-			flushToken(newHtml, z.Raw(), url)
+		case html.ErrorToken:
+			e := z.Err()
+			if e.Error() == "EOF" {
+				return newHtml, nil
+			} else {
+				return make([]byte, 0), z.Err()
+			}
+		case html.TextToken, html.DoctypeToken, html.CommentToken:
+			newHtml = append(newHtml, z.Raw()...)
+		case html.StartTagToken, html.EndTagToken, html.SelfClosingTagToken:
+			flushToken(&newHtml, z, url)
 		}
 	}
-	return newHtml, nil
 }
 
 var (
 	styleTokenPattern = regexp.MustCompile("(style\\s*=\\s*\\\")([^\\\"]+)(\\\")")
 )
 
-func flushToken(htmlBuf *[]byte, tokenBuf []byte, url string) {
+func flushToken(htmlBuf *[]byte, tz *html.Tokenizer, url string) {
+	tokenRaw := tz.Raw()
 	var serverBase string = conf.CONFIG.ServerBaseUrl
 	var JS_HOOK_TAG = "\n<script src=\"" + serverBase + "/js/jsHook.js\" type=\"text/javascript\"></script>"
-	if len(tokenBuf) > 0 && tokenBuf[0] == '<' {
-		token := string(tokenBuf)
+	if len(tokenRaw) > 0 && tokenRaw[0] == '<' {
+		token := string(tokenRaw)
 		if tagName := getTagName(token); tagName != "" && tagName[0] != '/' {
 			// a tag open
 
@@ -92,10 +63,10 @@ func flushToken(htmlBuf *[]byte, tokenBuf []byte, url string) {
 				token = token + JS_HOOK_TAG
 			}
 
-			tokenBuf = []byte(token)
+			tokenRaw = []byte(token)
 		}
 	}
-	*htmlBuf = append(*htmlBuf, tokenBuf...)
+	*htmlBuf = append(*htmlBuf, tokenRaw...)
 }
 
 func getTagName(token string) string {
