@@ -3,6 +3,6 @@
     "ServerBaseUrl": "",
     "ServerPort": 8080,
     "ResponseTimeoutSecond":5,
-    "FilterMode":"white",
+    "FilterMode":"",
     "FilterFile":"white-list.txt"
 }
