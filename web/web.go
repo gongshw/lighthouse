@@ -79,7 +79,7 @@ func proxyRequest(r *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 	for k, vs := range r.Header {
-		if k == "Cookie" || k == "Accept-Encoding" {
+		if isReqHeaderIgnore(k) {
 			//ignore
 		} else {
 			for _, v := range vs {
@@ -95,10 +95,18 @@ func proxyRequest(r *http.Request) (*http.Response, error) {
 	return tr.RoundTrip(req)
 }
 
+func isReqHeaderIgnore(headName string) bool {
+	return headName == "Cookie" || headName == "Accept-Encoding"
+}
+
+func isRespHeaderIgnore(headName string) bool {
+	return headName == "Set-Cookie" || headName == "Content-Length" || headName == "Content-Security-Policy"
+}
+
 func proxyResponse(w http.ResponseWriter, resp *http.Response, url string) {
 	w.Header().Add("Proxy-By", "gongshw/lighthouse")
 	for key, valueArray := range resp.Header {
-		if key == "Content-Length" || key == "Set-Cookie" {
+		if isRespHeaderIgnore(key) {
 			//ignore
 		} else if key == "Location" {
 			w.Header().Set(key, hook.GetProxiedUrl(resp.Header.Get(key), url))
@@ -114,6 +122,9 @@ func proxyResponse(w http.ResponseWriter, resp *http.Response, url string) {
 	var readErr error
 	if headerIs(resp.Header, "Content-Type", "text/html") {
 		body, readErr = hook.ParseHtml(resp.Body, url)
+	} else if headerIs(resp.Header, "Content-Type", "text/css") {
+		body, _ = ioutil.ReadAll(resp.Body)
+		body = []byte(hook.ParseCss(string(body[:]), url))
 	} else {
 		body, readErr = ioutil.ReadAll(resp.Body)
 	}

@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	urlPattern = regexp.MustCompile("(url\\(\\s*)([^\\)]+)(\\s*\\))")
+	urlPattern = regexp.MustCompile("(url\\(\\s*[\"']?\\s*)([^\\)]+)(\\s*[\"']?\\s*\\))")
 )
 
 func ParseCss(css string, url string) string {
