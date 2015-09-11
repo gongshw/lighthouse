@@ -27,8 +27,11 @@ func ParseUrl(url string) (string, string) {
 }
 
 func GetProxiedUrl(url string, base string) string {
+	if !urlNeedProxy(url) {
+		return url
+	}
 	var serverBase string = conf.CONFIG.ServerBaseUrl
-	if strings.HasPrefix(url, "http") || strings.HasPrefix(url, "https") {
+	if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
 		protocal, uri := ParseUrl(url)
 		return serverBase + "/proxy/" + protocal + "/" + uri
 	} else {
@@ -43,6 +46,14 @@ func GetProxiedUrl(url string, base string) string {
 		}
 	}
 	return url
+}
+
+func urlNeedProxy(url string) bool {
+	if strings.HasPrefix(url, "/proxy/http") {
+		return false
+	} else {
+		return true
+	}
 }
 
 func GetResouceDir(url string) string {
