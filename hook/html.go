@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+var tagAttrToProxy map[string](map[string]bool)
+
+var JS_HOOK_TAG string
+
 func ParseHtml(r io.Reader, url string) ([]byte, error) {
 	z := html.NewTokenizer(r)
 	var newHtml []byte
@@ -34,7 +38,7 @@ func ParseHtml(r io.Reader, url string) ([]byte, error) {
 		case html.DoctypeToken, html.CommentToken, html.EndTagToken:
 			newHtml = append(newHtml, rawHtmlBytes...)
 		case html.StartTagToken, html.SelfClosingTagToken:
-			flushToken(&newHtml, z, url)
+			flushTagToken(&newHtml, z, url)
 		}
 		if tt == html.StartTagToken {
 			lastTagByte, _ := z.TagName()
@@ -45,46 +49,32 @@ func ParseHtml(r io.Reader, url string) ([]byte, error) {
 	}
 }
 
-var (
-	styleTokenPattern = regexp.MustCompile("(style\\s*=\\s*\\\")([^\\\"]+)(\\\")")
-)
-
-func flushToken(htmlBuf *[]byte, tz *html.Tokenizer, url string) {
-	tokenRaw := tz.Raw()
-	var serverBase string = conf.CONFIG.ServerBaseUrl
-	var JS_HOOK_TAG = "\n<script src=\"" + serverBase + "/js/jsHook.js\" type=\"text/javascript\"></script>"
-	if len(tokenRaw) > 0 && tokenRaw[0] == '<' {
-		token := string(tokenRaw)
-		if tagName := getTagName(token); tagName != "" && tagName[0] != '/' {
-			// a tag open
-
-			if match := styleTokenPattern.FindStringSubmatch(token); len(match) == 4 {
-				css := match[2]
-				token = styleTokenPattern.ReplaceAllString(token, "${1}"+ParseCss(css, url)+"${3}")
+func flushTagToken(htmlBuf *[]byte, tz *html.Tokenizer, url string) {
+	*htmlBuf = append(*htmlBuf, '<')
+	tagName, hasAttr := tz.TagName()
+	*htmlBuf = append(*htmlBuf, tagName...)
+	if hasAttr {
+		for {
+			attrKey, attrValue, hasMore := tz.TagAttr()
+			*htmlBuf = append(*htmlBuf, ' ')
+			*htmlBuf = append(*htmlBuf, attrKey...)
+			*htmlBuf = append(*htmlBuf, '=', '"')
+			if tagAttrToProxy[string(tagName)][string(attrKey)] {
+				urlInAttr := string(attrValue)
+				*htmlBuf = append(*htmlBuf, []byte(GetProxiedUrl(urlInAttr, url))...)
+			} else {
+				*htmlBuf = append(*htmlBuf, attrValue...)
 			}
-
-			if attrrs := tagAttrToProxy[tagName]; len(attrrs) != 0 {
-				for _, attr := range attrrs {
-					// replace all links in tag attr
-					attrPattern := regexp.MustCompile("(" + attr + "=\\\")([^\\\"]+)(\\\")")
-					if match := attrPattern.FindStringSubmatch(token); len(match) == 4 {
-						rawUrl := match[2]
-						proxiedUrl := GetProxiedUrl(rawUrl, url)
-						token = attrPattern.ReplaceAllString(token, "${1}"+proxiedUrl+"${3}")
-					}
-				}
+			*htmlBuf = append(*htmlBuf, '"')
+			if !hasMore {
+				break
 			}
-
-			if tagName == "head" {
-				// inject js
-				token = token + JS_HOOK_TAG
-
-			}
-
-			tokenRaw = []byte(token)
 		}
 	}
-	*htmlBuf = append(*htmlBuf, tokenRaw...)
+	*htmlBuf = append(*htmlBuf, '>')
+	if string(tagName) == "head" {
+		*htmlBuf = append(*htmlBuf, []byte(JS_HOOK_TAG)...)
+	}
 }
 
 func getTagName(token string) string {
@@ -97,10 +87,8 @@ func getTagName(token string) string {
 	}
 }
 
-var tagAttrToProxy map[string][]string
-
 func init() {
-	tagAttrToProxy = map[string][]string{
+	tagAttrToProxyTemp := map[string][]string{
 		"a":      []string{"href"},
 		"script": []string{"src"},
 		"link":   []string{"href"},
@@ -109,4 +97,14 @@ func init() {
 		"meta":   []string{"content"},
 		"form":   []string{"action"},
 	}
+	tagAttrToProxy = make(map[string](map[string]bool))
+	for tag, attrs := range tagAttrToProxyTemp {
+		tagAttrToProxy[tag] = make(map[string]bool)
+		for _, attr := range attrs {
+			tagAttrToProxy[tag][attr] = true
+		}
+	}
+
+	var serverBase string = conf.CONFIG.ServerBaseUrl
+	JS_HOOK_TAG = "\n<script src=\"" + serverBase + "/js/jsHook.js\" type=\"text/javascript\"></script>"
 }
