@@ -36,7 +36,15 @@
         }
 
         //hook HTMLScriptElement.src property
-        hookProperty(HTMLScriptElement,'src');
+        var elementToHook = {
+            'HTMLScriptElement':['src'],
+            'HTMLImageElement':['src'],
+        }
+        for (var eleName in elementToHook) {
+            for (var i = elementToHook[eleName].length - 1; i >= 0; i--) {
+                hookProperty(window[eleName], elementToHook[eleName][i]);
+            };
+        };
 
 
         document.write('<script src="/js/statusBar.js" type="text/javascript"></script>');
