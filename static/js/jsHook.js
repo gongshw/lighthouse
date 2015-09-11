@@ -8,6 +8,9 @@
         window._js_hooked = true;
 
         function proxyUrl(url) {
+            if (url.startsWith('/proxy/http')) {
+                return url;
+            }
             if (url.startsWith('http://') || url.startsWith('https://')) {
                 var token = url.match(/^(http.?):\/\/(.*)$/);
                 return '/proxy/' + token[1] + '/' + token[2];
@@ -21,8 +24,12 @@
         }
 
         //disable all ajax request
-        var _raw_send_method = XMLHttpRequest.prototype.send
-        XMLHttpRequest.prototype.send = function() {}
+        var _raw_open_method = XMLHttpRequest.prototype.open
+        XMLHttpRequest.prototype.open = function() {
+            var args = Array.prototype.slice.call(arguments);
+            args[1] = proxyUrl(args[1]);
+            _raw_open_method.apply(this, args);
+        }
 
         function hookProperty(type, attrName) {
             var _raw_prop = Object.getOwnPropertyDescriptor(type.prototype, attrName);
