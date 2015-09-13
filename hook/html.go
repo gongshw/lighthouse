@@ -80,7 +80,7 @@ func flushTagToken(htmlBuf *[]byte, tz *html.Tokenizer, url string) {
 func getJsHookTag() string {
 	if JS_HOOK_TAG == "" {
 		serverBase := conf.CONFIG.ServerBaseUrl
-		JS_HOOK_TAG := "\n<script src=\"" + serverBase + "/js/jsHook.js\" type=\"text/javascript\"></script>"
+		JS_HOOK_TAG = "\n<script src=\"" + serverBase + "/js/jsHook.js\" type=\"text/javascript\"></script>"
 	}
 	return JS_HOOK_TAG
 }
