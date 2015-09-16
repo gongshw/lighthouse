@@ -1,8 +1,4 @@
 {
     "StaicFileDir": "static",
-    "ServerBaseUrl": "",
-    "ServerPort": 8080,
-    "ResponseTimeoutSecond":5,
-    "FilterMode":"",
-    "FilterFile":"white-list.txt"
+    "ServerPort": 8080
 }

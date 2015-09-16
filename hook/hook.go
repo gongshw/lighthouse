@@ -9,7 +9,7 @@ import (
 )
 
 func ParseBaseUrl(url string) (string, string) {
-	u, err := urllib.Parse(url)
+	u, err := urllib.ParseRequestURI(url)
 	if err != nil {
 		log.Println(err)
 		return "", ""
@@ -18,7 +18,7 @@ func ParseBaseUrl(url string) (string, string) {
 }
 
 func ParseUrl(url string) (string, string) {
-	u, err := urllib.Parse(url)
+	u, err := urllib.ParseRequestURI(url)
 	if err != nil {
 		log.Println(err)
 		return "", ""

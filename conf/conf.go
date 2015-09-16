@@ -3,11 +3,13 @@ package conf
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"os/user"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -21,15 +23,65 @@ type Configuration struct {
 	FilterMode            string
 	FilterFile            string
 	ContentLengthLimit    int64
+	SSLCertificationFile  string
+	SSLKeyFile            string
+	DisableSSL            bool
+}
+
+type ConfigValidateError struct {
+	errorMsgs []string
+}
+
+func (e ConfigValidateError) Error() string {
+	return "fail to load configuration: " + strings.Join(e.errorMsgs, ";")
+}
+
+func (e *ConfigValidateError) Append(msg string) {
+	e.errorMsgs = append(e.errorMsgs, msg)
+}
+
+func (e *ConfigValidateError) HasError() bool {
+	return len(e.errorMsgs) > 0
 }
 
 func validateConfig() error {
-	// TODO
-	return nil
+	e := &ConfigValidateError{}
+
+	if CONFIG.StaicFileDir == "" {
+		e.Append("StaicFileDir is empty")
+	} else if !pathValid(CONFIG.StaicFileDir) {
+		e.Append(fmt.Sprintf("StaicFileDir(\"%s\") is unaccessable", CONFIG.StaicFileDir))
+	}
+
+	if CONFIG.ServerPort <= 0 || CONFIG.ServerPort > 65535 {
+		e.Append(fmt.Sprintf("ServerPort(%d) is illegal", CONFIG.ServerPort))
+	}
+
+	if CONFIG.FilterMode != "" {
+		if strings.EqualFold(CONFIG.FilterMode, "white") &&
+			strings.EqualFold(CONFIG.FilterMode, "black") {
+			e.Append(fmt.Sprintf("FilterMode(\"%s\") is illegal", CONFIG.StaicFileDir))
+		}
+		if !pathValid(CONFIG.FilterFile) {
+			e.Append(fmt.Sprintf("FilterFile(\"%s\") is unaccessable", CONFIG.StaicFileDir))
+		}
+	}
+
+	if e.HasError() {
+		return e
+	} else {
+		return nil
+	}
+}
+
+func pathValid(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 var CONFIG Configuration = Configuration{
-	ContentLengthLimit: _5MB,
+	ContentLengthLimit:    _5MB,
+	ResponseTimeoutSecond: 5,
 }
 
 var inited bool
@@ -57,7 +109,7 @@ func LoadConfig(configFilePath string) error {
 	if err != nil {
 		return err
 	}
-	if validateErr := validateConfig(); validateConfig() != nil {
+	if validateErr := validateConfig(); validateErr != nil {
 		return validateErr
 	}
 	inited = true
@@ -85,7 +137,7 @@ func tryConfigFilePath(configFilePath string) (string, error) {
 		}
 		for _, path := range posibleConfigFiles {
 			if _, err := os.Stat(path); err == nil {
-				log.Println("load configuration file from " + path)
+				log.Println("found configuration file at " + path)
 				return path, nil
 			}
 		}

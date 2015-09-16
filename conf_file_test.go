@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestLghthouseJsonFile(t *testing.T) {
+func TestLighthouseJsonFile(t *testing.T) {
 	err := conf.LoadConfig("./lighthouse.json")
 	if err != nil {
 		t.Fatal(err)
