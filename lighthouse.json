@@ -1,4 +1,4 @@
 {
     "StaicFileDir": "static",
-    "ServerPort": 8080
+    "DisableSSL":true
 }

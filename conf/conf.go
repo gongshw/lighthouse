@@ -53,7 +53,7 @@ func validateConfig() error {
 		e.Append(fmt.Sprintf("StaicFileDir(\"%s\") is unaccessable", CONFIG.StaicFileDir))
 	}
 
-	if CONFIG.ServerPort <= 0 || CONFIG.ServerPort > 65535 {
+	if CONFIG.ServerPort < 0 || CONFIG.ServerPort > 65535 {
 		e.Append(fmt.Sprintf("ServerPort(%d) is illegal", CONFIG.ServerPort))
 	}
 
@@ -82,6 +82,7 @@ func pathValid(path string) bool {
 var CONFIG Configuration = Configuration{
 	ContentLengthLimit:    _5MB,
 	ResponseTimeoutSecond: 5,
+	ServerPort:            0,
 }
 
 var inited bool
