@@ -1,4 +1,3 @@
 {
-    "StaicFileDir": "static",
-    "DisableSSL":true
+    "StaicFileDir": "static"
 }
