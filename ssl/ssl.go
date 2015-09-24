@@ -18,6 +18,9 @@ const (
 	DEFAULT_CRT_NAME = "temp.crt"
 	DEFAULT_KEY_NAME = "temp.key"
 	DEFAULT_KEY_BITS = 1024
+
+	DEFALT_CRT_VALIDITY  = 365 * 24 * time.Hour
+	DEAFLT_CRT_KEY_USAGE = x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature
 )
 
 func CreateCrtAndKey(hostName string, crtFile, keyFile *os.File) error {
@@ -32,20 +35,19 @@ func CreateCrtAndKey(hostName string, crtFile, keyFile *os.File) error {
 			Subject: pkix.Name{
 				Organization: []string{hostName},
 			},
-			NotBefore:             now,
-			NotAfter:              now.Add(365 * 24 * time.Hour),
-			KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-			BasicConstraintsValid: true,
+			NotBefore: now,
+			NotAfter:  now.Add(DEFALT_CRT_VALIDITY),
+			KeyUsage:  DEAFLT_CRT_KEY_USAGE,
 		}
 		publicKey := privateKey.Public()
 		cert, err := x509.CreateCertificate(rand.Reader, crtTemplate, crtTemplate, publicKey, privateKey)
 		if err != nil {
 			return err
 		}
-		if writePem("CERTIFICATE", crtFile, cert) != nil {
+		if err := writePem("CERTIFICATE", crtFile, cert); err != nil {
 			return err
 		}
-		if writePem("RSA PRIVATE KEY", keyFile, x509.MarshalPKCS1PrivateKey(privateKey)) != nil {
+		if err := writePem("RSA PRIVATE KEY", keyFile, x509.MarshalPKCS1PrivateKey(privateKey)); err != nil {
 			return err
 		}
 		return nil

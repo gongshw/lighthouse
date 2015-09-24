@@ -108,7 +108,7 @@ func LoadConfig(configFilePath string) error {
 	decoder := json.NewDecoder(configFile)
 	err = decoder.Decode(&CONFIG)
 	if err != nil {
-		return err
+		return errors.New(configFilePath + ": " + err.Error())
 	}
 	if validateErr := validateConfig(); validateErr != nil {
 		return validateErr
