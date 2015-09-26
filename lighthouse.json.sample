@@ -5,7 +5,7 @@
     "FilterMode": "",
     "FilterFile": "",
     "ContentLengthLimit": 5242880,
-    "SSLCertificationFile",
+    "SSLCertificationFile": "",
     "SSLKeyFile": "",
     "DisableSSL": false
 }

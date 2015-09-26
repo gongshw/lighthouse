@@ -6,7 +6,7 @@ import (
 )
 
 func TestLighthouseJsonFile(t *testing.T) {
-	err := conf.LoadConfig("./lighthouse.json")
+	err := conf.LoadConfig("./lighthouse.json.sample")
 	if err != nil {
 		t.Fatal(err)
 	} else {
