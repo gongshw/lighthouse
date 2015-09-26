@@ -16,7 +16,6 @@ import (
 const _5MB = 5 * 1024 * 1024
 
 type Configuration struct {
-	StaicFileDir          string
 	ServerBaseUrl         string
 	ServerPort            int
 	ResponseTimeoutSecond time.Duration
@@ -33,7 +32,7 @@ type ConfigValidateError struct {
 }
 
 func (e ConfigValidateError) Error() string {
-	return "fail to load configuration: " + strings.Join(e.errorMsgs, ";")
+	return "fail to load configuration: " + strings.Join(e.errorMsgs, "; ")
 }
 
 func (e *ConfigValidateError) Append(msg string) {
@@ -47,12 +46,6 @@ func (e *ConfigValidateError) HasError() bool {
 func validateConfig() error {
 	e := &ConfigValidateError{}
 
-	if CONFIG.StaicFileDir == "" {
-		e.Append("StaicFileDir is empty")
-	} else if !pathValid(CONFIG.StaicFileDir) {
-		e.Append(fmt.Sprintf("StaicFileDir(\"%s\") is unaccessable", CONFIG.StaicFileDir))
-	}
-
 	if CONFIG.ServerPort < 0 || CONFIG.ServerPort > 65535 {
 		e.Append(fmt.Sprintf("ServerPort(%d) is illegal", CONFIG.ServerPort))
 	}
@@ -60,10 +53,26 @@ func validateConfig() error {
 	if CONFIG.FilterMode != "" {
 		if strings.EqualFold(CONFIG.FilterMode, "white") &&
 			strings.EqualFold(CONFIG.FilterMode, "black") {
-			e.Append(fmt.Sprintf("FilterMode(\"%s\") is illegal", CONFIG.StaicFileDir))
+			e.Append(fmt.Sprintf("FilterMode(\"%s\") is illegal", CONFIG.FilterMode))
 		}
 		if !pathValid(CONFIG.FilterFile) {
-			e.Append(fmt.Sprintf("FilterFile(\"%s\") is unaccessable", CONFIG.StaicFileDir))
+			e.Append(fmt.Sprintf("FilterFile(\"%s\") is unaccessable", CONFIG.FilterFile))
+		}
+	}
+	if !CONFIG.DisableSSL {
+		if CONFIG.SSLCertificationFile == "" && CONFIG.SSLKeyFile != "" {
+			e.Append("SSLCertificationFile is not set")
+		}
+		if CONFIG.SSLCertificationFile != "" && CONFIG.SSLKeyFile == "" {
+			e.Append("SSLKeyFile is not set")
+		}
+		if CONFIG.SSLCertificationFile != "" && CONFIG.SSLKeyFile != "" {
+			if !pathValid(CONFIG.SSLCertificationFile) {
+				e.Append(fmt.Sprintf("SSLCertificationFile(\"%s\") is unaccessable", CONFIG.SSLCertificationFile))
+			}
+			if !pathValid(CONFIG.SSLKeyFile) {
+				e.Append(fmt.Sprintf("SSLKeyFile(\"%s\") is unaccessable", CONFIG.SSLKeyFile))
+			}
 		}
 	}
 
@@ -87,10 +96,6 @@ var CONFIG Configuration = Configuration{
 
 var inited bool
 
-var (
-	ERROR_LOAD_CONF = errors.New("can't load configuration file")
-)
-
 func LoadConfig(configFilePath string) error {
 	if inited {
 		return nil
@@ -100,6 +105,10 @@ func LoadConfig(configFilePath string) error {
 	configFilePath, err = tryConfigFilePath(configFilePath)
 	if err != nil {
 		return err
+	}
+	if configFilePath == "" {
+		// no config file found. use default config
+		return nil
 	}
 	configFile, err = os.Open(configFilePath)
 	if err != nil {
@@ -142,6 +151,8 @@ func tryConfigFilePath(configFilePath string) (string, error) {
 				return path, nil
 			}
 		}
-		return "", ERROR_LOAD_CONF
+		log.Println("no configuration file found. use defalut config.")
+		// not valid config file found
+		return "", nil
 	}
 }

@@ -1,0 +1,11 @@
+{
+    "ServerBaseUrl": "",
+    "ServerPort": 8443,
+    "ResponseTimeoutSecond": 5,
+    "FilterMode": "",
+    "FilterFile": "",
+    "ContentLengthLimit": 5242880,
+    "SSLCertificationFile",
+    "SSLKeyFile": "",
+    "DisableSSL": false
+}

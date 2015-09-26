@@ -3,6 +3,7 @@ package web
 import (
 	"errors"
 	"fmt"
+	"github.com/gongshw/lighthouse/bindata"
 	"github.com/gongshw/lighthouse/conf"
 	"github.com/gongshw/lighthouse/hook"
 	"html/template"
@@ -143,10 +144,11 @@ func headerIs(headerMap map[string][]string, headerKey string, headerValue strin
 }
 
 func ShowError(w http.ResponseWriter, msg string, url string) {
-	if t, err := template.ParseFiles(conf.CONFIG.StaicFileDir + "/error.html"); err == nil {
+	t := template.New("error_template")
+	if t, err := t.Parse(string(bindata.MustAsset("error.html"))); err == nil {
 		t.Execute(w, map[string]string{"msg": msg, "url": url})
 	} else {
-		log.Println("can't find error.html in %s", conf.CONFIG.StaicFileDir)
+		log.Println("can't parse error.html")
 		fmt.Fprintf(w, msg+": %s", url)
 	}
 }

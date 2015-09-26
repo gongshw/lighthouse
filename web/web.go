@@ -20,7 +20,8 @@ func Start() {
 	}
 	http.HandleFunc("/proxy/", proxyHandler)
 	http.HandleFunc("/detect/", detecthander)
-	http.Handle("/", http.FileServer(http.Dir(conf.CONFIG.StaicFileDir)))
+	//http.Handle("/", http.FileServer(http.Dir(conf.CONFIG.StaicFileDir)))
+	http.HandleFunc("/", staticHandler)
 	var serverPortStr string
 	if conf.CONFIG.DisableSSL {
 		if conf.CONFIG.ServerPort == 0 {
