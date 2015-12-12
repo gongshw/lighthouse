@@ -14,13 +14,17 @@ all: makebin test
 test: makebin
 	go test -v ./...
 
-makebin: get
+makebin:
+	go get -u github.com/jteeuwen/go-bindata/...
 	date "+%Y%m%d%H%M%S" > static/CREATE_TIME
 	go-bindata -o bindata/bindata.go -pkg bindata -ignore /\\..* -prefix static/ static/...
 
-get:
-	go get -u github.com/jteeuwen/go-bindata/...
+get: makebin
 	go get ./...
 
 run: all
 	open "https://127.0.0.1:8443" && ./${BINARY}
+
+clean:
+	go clean
+	rm -rf bindata
