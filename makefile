@@ -11,7 +11,7 @@ LDFLAGS=-ldflags "-X main.Version=${VERSION} -X main.BuildTime=${BUILD_TIME}"
 all: makebin test
 	go build ${LDFLAGS} -o ${BINARY} 
 
-test: makebin
+test: makebin get
 	go test -v ./...
 
 makebin:
