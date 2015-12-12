@@ -24,18 +24,12 @@ What can be proxied:
 
 2. run `go get github.com/gongshw/lighthouse`
 
-3. make a conf.json file at the work dir:
+3. run `$GOPATH/bin/lighthouse`
 
-```json
-{
-    "StaicFileDir": "static",
-    "ServerBaseUrl": "http(s)://your_server:8080/",
-    "ServerPort": 8080
-}
+3. visit `https://your_server:8080/` from your restricted devices and enjoy!
 
-```
+## faq
 
-4. run `$GOPATH/bin/lighthouse`
-
-
-5. visit `http(s)://your_server:8080/` from your restricted devices and enjoy!
+### Why does a ssl conectiopn error show up when visiting default-config lighthouse home page?
+### How can I use a my own ssl certifacation?
+### Can I use http protocal instead of https?

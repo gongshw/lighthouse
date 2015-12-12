@@ -92,5 +92,8 @@ $RECYCLE.BIN/
 # sftp configuration file
 sftp-config.json
 
+# auto generated code
+bindata/
+static/CREATE_TIME
 
 lighthouse
