@@ -8,10 +8,14 @@ BUILD_TIME=`date +%FT%T%z`
 # Setup the -ldflags option for go build here, interpolate the variable values
 LDFLAGS=-ldflags "-X main.Version=${VERSION} -X main.BuildTime=${BUILD_TIME}"
 
-all: makebin test
+all: test
 	go build ${LDFLAGS} -o ${BINARY} 
 
-test: makebin get
+install: makebin
+	go install ${LDFLAGS}
+
+
+test: get
 	go test -v ./...
 
 makebin:

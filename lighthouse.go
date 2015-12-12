@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/gongshw/lighthouse/conf"
 	"github.com/gongshw/lighthouse/web"
 	"log"
-	"fmt"
+	"os"
 )
 
 var (
@@ -16,15 +17,13 @@ var configLocation = flag.String("config", "", "Set the json config file locatio
 
 var useDefaltConfig = flag.Bool("default", false, "Ignore all config location setting. Use the default config.")
 
-var showVersion = flag.Bool("version", false, "Pring version info.")
+var showVersion = flag.Bool("version", false, "Pring version info and exit with status code 0.")
 
 func main() {
 	flag.Parse()
 	var err error
 	if *showVersion {
-		fmt.Println("Version: " + Version)
-		fmt.Println("Build At: " + BuildTime)
-		return
+		printVersionAndExit()
 	}
 	if !*useDefaltConfig {
 		err = conf.LoadConfig(*configLocation)
@@ -36,4 +35,10 @@ func main() {
 	} else {
 		log.Fatalln(err)
 	}
+}
+
+func printVersionAndExit() {
+	fmt.Println("Version: " + Version)
+	fmt.Println("Build At: " + BuildTime)
+	os.Exit(0)
 }

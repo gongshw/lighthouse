@@ -1,4 +1,4 @@
-package hook
+package proxy
 
 import (
 	"github.com/gongshw/lighthouse/conf"

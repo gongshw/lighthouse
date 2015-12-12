@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"github.com/gongshw/lighthouse/conf"
-	"github.com/gongshw/lighthouse/hook"
+	"github.com/gongshw/lighthouse/proxy"
 	"log"
 	"os"
 	"path/filepath"
@@ -35,7 +35,7 @@ func UrlNeedProxy(url string) bool {
 		// no filter config
 		return true
 	}
-	_, host := hook.ParseBaseUrl(url)
+	_, host := proxy.ParseBaseUrl(url)
 	for _, p := range patterns {
 		if p.MatchString(host) {
 			return filterMode == FILTER_MODE_WHITE_LIST

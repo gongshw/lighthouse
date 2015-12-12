@@ -2,7 +2,7 @@ package web
 
 import (
 	"github.com/gongshw/lighthouse/conf"
-	"github.com/gongshw/lighthouse/hook"
+	"github.com/gongshw/lighthouse/proxy"
 	"github.com/gongshw/lighthouse/ssl"
 	"log"
 	"net/http"
@@ -59,7 +59,7 @@ func getHost() string {
 	if url == "" {
 		return "localhost"
 	} else {
-		_, host := hook.ParseBaseUrl(url)
+		_, host := proxy.ParseBaseUrl(url)
 		return host
 	}
 }

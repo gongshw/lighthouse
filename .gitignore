@@ -82,6 +82,9 @@ $RECYCLE.BIN/
 *.tmPreferences.cache
 *.stTheme.cache
 
+# vim
+*.swap
+
 # workspace files are user-specific
 *.sublime-workspace
 
