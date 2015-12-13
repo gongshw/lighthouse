@@ -4,7 +4,6 @@ import (
 	"github.com/gongshw/lighthouse/conf"
 	"golang.org/x/net/html"
 	"io"
-	"regexp"
 	"strings"
 )
 
@@ -37,19 +36,18 @@ func ParseHtml(r io.Reader, url string) ([]byte, error) {
 			}
 		case html.DoctypeToken, html.CommentToken, html.EndTagToken:
 			newHtml = append(newHtml, rawHtmlBytes...)
-		case html.StartTagToken, html.SelfClosingTagToken:
+		case html.StartTagToken:
+			lastTag = flushTagToken(&newHtml, z, url)
+		case html.SelfClosingTagToken:
 			flushTagToken(&newHtml, z, url)
 		}
-		if tt == html.StartTagToken {
-			lastTagByte, _ := z.TagName()
-			lastTag = string(lastTagByte[:])
-		} else {
+		if tt != html.StartTagToken {
 			lastTag = ""
 		}
 	}
 }
 
-func flushTagToken(htmlBuf *[]byte, tz *html.Tokenizer, url string) {
+func flushTagToken(htmlBuf *[]byte, tz *html.Tokenizer, url string) string {
 	*htmlBuf = append(*htmlBuf, '<')
 	tagName, hasAttr := tz.TagName()
 	*htmlBuf = append(*htmlBuf, tagName...)
@@ -75,6 +73,7 @@ func flushTagToken(htmlBuf *[]byte, tz *html.Tokenizer, url string) {
 	if string(tagName) == "head" {
 		*htmlBuf = append(*htmlBuf, []byte(getJsHookTag())...)
 	}
+	return string(tagName)
 }
 
 func getJsHookTag() string {
@@ -83,16 +82,6 @@ func getJsHookTag() string {
 		JS_HOOK_TAG = "\n<script src=\"" + serverBase + "/js/jsHook.js\" type=\"text/javascript\"></script>"
 	}
 	return JS_HOOK_TAG
-}
-
-func getTagName(token string) string {
-	tagNameRegex := regexp.MustCompile("^<\\s*([a-zA-Z]+).*>$")
-	submatch := tagNameRegex.FindStringSubmatch(token)
-	if submatch != nil {
-		return submatch[1]
-	} else {
-		return ""
-	}
 }
 
 func init() {
