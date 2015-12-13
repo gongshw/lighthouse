@@ -21,7 +21,8 @@ test: get
 
 makebin:
 	go get -u github.com/jteeuwen/go-bindata/...
-	date "+%Y%m%d%H%M%S" > static/CREATE_TIME
+	date "+%Y%m%d%H%M%S" > static/STATIC_PACKAGE_TIME
+	git log -1 > static/GIT_COMMIT
 	go-bindata -o bindata/bindata.go -pkg bindata -ignore /\\..* -prefix static/ static/...
 
 get: makebin

@@ -97,6 +97,7 @@ sftp-config.json
 
 # auto generated code
 bindata/
-static/CREATE_TIME
+static/GIT_COMMIT
+static/STATIC_PACKAGE_TIME
 
 lighthouse
