@@ -1,8 +1,10 @@
 package proxy
 
 import (
+	"compress/gzip"
 	"errors"
 	"github.com/gongshw/lighthouse/conf"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -40,16 +42,33 @@ func ProxyResponse(w http.ResponseWriter, resp *http.Response, url string) error
 	w.WriteHeader(resp.StatusCode)
 	var body []byte
 	var readErr error
+	var reader io.Reader
+	var writer io.Writer
+	if headerIs(resp.Header, "Content-Encoding", "gzip") {
+		if gzipReader, err := gzip.NewReader(resp.Body); err != nil {
+			return err
+		} else {
+			defer gzipReader.Close()
+			reader = gzipReader
+		}
+		gzipWriter := gzip.NewWriter(w)
+		defer gzipWriter.Close()
+		writer = gzipWriter
+		log.Println("gzipped stream found at " + url)
+	} else {
+		reader = resp.Body
+		writer = w
+	}
 	if headerIs(resp.Header, "Content-Type", "text/html") {
-		body, readErr = ParseHtml(resp.Body, url)
+		body, readErr = ParseHtml(reader, url)
 	} else if headerIs(resp.Header, "Content-Type", "text/css") {
-		body, _ = ioutil.ReadAll(resp.Body)
+		body, _ = ioutil.ReadAll(reader)
 		body = []byte(ParseCss(string(body[:]), url))
 	} else {
-		body, readErr = ioutil.ReadAll(resp.Body)
+		body, readErr = ioutil.ReadAll(reader)
 	}
 	if readErr == nil {
-		w.Write(body)
+		writer.Write(body)
 		return nil
 	} else {
 		log.Println(readErr)
@@ -61,7 +80,12 @@ func proxyHeader(raw http.Header, proxied http.Header, url string){
 	proxied.Add("Proxy-By", "gongshw/lighthouse")
 	for key, valueArray := range raw {
 		if isRespHeaderIgnore(key) {
-			//ignore
+			// ignore
+		} else if key == "Accept-Encoding" && len(valueArray) == 1 {
+			// only gzip support
+			if (strings.Contains(valueArray[0], "gzip")) {
+				proxied.Set(key, "gzip")
+			}
 		} else if key == "Location" {
 			proxied.Set(key, GetProxiedUrl(raw.Get(key), url))
 		} else {
@@ -85,8 +109,7 @@ func proxyUrl(path string) (string, error) {
 func isReqHeaderIgnore(headName string) bool {
 	switch headName{
 		case
-			"Cookie", // not support cookie
-			"Accept-Encoding": // not support gzip encoding
+			"Cookie": // not support cookie
 			return true;
 	}
 	return false;
