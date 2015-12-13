@@ -36,20 +36,8 @@ func ProxyRequest(r *http.Request) (*http.Response, error) {
 }
 
 func ProxyResponse(w http.ResponseWriter, resp *http.Response, url string) error {
-	w.Header().Add("Proxy-By", "gongshw/lighthouse")
-	for key, valueArray := range resp.Header {
-		if isRespHeaderIgnore(key) {
-			//ignore
-		} else if key == "Location" {
-			w.Header().Set(key, GetProxiedUrl(resp.Header.Get(key), url))
-		} else {
-			for _, value := range valueArray {
-				w.Header().Add(key, value)
-			}
-		}
-	}
+	proxyHeader(resp.Header, w.Header(), url);
 	w.WriteHeader(resp.StatusCode)
-
 	var body []byte
 	var readErr error
 	if headerIs(resp.Header, "Content-Type", "text/html") {
@@ -69,6 +57,21 @@ func ProxyResponse(w http.ResponseWriter, resp *http.Response, url string) error
 	}
 }
 
+func proxyHeader(raw http.Header, proxied http.Header, url string){
+	proxied.Add("Proxy-By", "gongshw/lighthouse")
+	for key, valueArray := range raw {
+		if isRespHeaderIgnore(key) {
+			//ignore
+		} else if key == "Location" {
+			proxied.Set(key, GetProxiedUrl(raw.Get(key), url))
+		} else {
+			for _, value := range valueArray {
+				proxied.Add(key, value)
+			}
+		}
+	}
+}
+
 func proxyUrl(path string) (string, error) {
 	token := strings.SplitN(path, "/", 5)
 	if len(token) == 5 {
@@ -82,8 +85,8 @@ func proxyUrl(path string) (string, error) {
 func isReqHeaderIgnore(headName string) bool {
 	switch headName{
 		case
-			"Cookie",
-			"Accept-Encodin":
+			"Cookie", // not support cookie
+			"Accept-Encoding": // not support gzip encoding
 			return true;
 	}
 	return false;

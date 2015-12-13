@@ -33,3 +33,5 @@ What can be proxied:
 ### Why does a ssl conectiopn error show up when visiting default-config lighthouse home page?
 ### How can I use a my own ssl certifacation?
 ### Can I use http protocal instead of https?
+### How to run lighthouse as a service (and use my own front-end ui)?
+### How to block some domain?

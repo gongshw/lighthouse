@@ -13,11 +13,14 @@ var (
 	Version   string
 	BuildTime string
 )
-var configLocation = flag.String("config", "", "Set the json config file location. If this flag is not set, lighthouse will lookup for a lighthouse.json file from the current direction and the $HOME of current user. If no config file found, lighthouse will use a default.")
 
-var useDefaltConfig = flag.Bool("default", false, "Ignore all config location setting. Use the default config.")
+var (
+	configLocation = flag.String("config", "", "Set the json config file location. If this flag is not set, lighthouse will lookup for a lighthouse.json file from the current direction and the $HOME of current user. If no config file found, lighthouse will use a default.")
 
-var showVersion = flag.Bool("version", false, "Pring version info and exit with status code 0.")
+	useDefaltConfig = flag.Bool("default", false, "Ignore all config location setting. Use the default config.")
+
+	showVersion = flag.Bool("version", false, "Pring version info and exit with status code 0.")
+)
 
 func main() {
 	flag.Parse()

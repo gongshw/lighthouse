@@ -16,6 +16,7 @@ install: makebin
 
 
 test: get
+	go fmt
 	go test -v ./...
 
 makebin:
