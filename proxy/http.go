@@ -80,11 +80,24 @@ func proxyUrl(path string) (string, error) {
 }
 
 func isReqHeaderIgnore(headName string) bool {
-	return headName == "Cookie" || headName == "Accept-Encoding"
+	switch headName{
+		case
+			"Cookie",
+			"Accept-Encodin":
+			return true;
+	}
+	return false;
 }
 
 func isRespHeaderIgnore(headName string) bool {
-	return headName == "Set-Cookie" || headName == "Content-Length" || headName == "Content-Security-Policy"
+	switch headName{
+		case
+			"Set-Cookie",
+			"Content-Length",
+			"Content-Security-Policy":
+			return true;
+	}
+	return false;
 }
 
 func headerIs(headerMap map[string][]string, headerKey string, headerValue string) bool {
